@@ -22,5 +22,8 @@
 ## 执行
 
 ```shell
-make migration
+make migration # 执行迁移
 ```
+
+## 改进
+- 可以将 Cargo.toml中 crate 依赖的 branch = master 去掉，因为默认分支是 master。
