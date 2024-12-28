@@ -16,7 +16,10 @@ def parse_csv_to_tuples(file_path):
     return tuples_list
 
 if __name__ == '__main__':
-    mapping = parse_csv_to_tuples()
+    os.system('mkdir repos')
+    os.chdir('repos')
+
+    mapping = parse_csv_to_tuples('../mapping.csv')
     # 将所有仓库的推送到新的远程仓库中
     for item in mapping:
         dst = item[1]
@@ -25,4 +28,9 @@ if __name__ == '__main__':
         os.system(f'gh repo create reL4team2/{dst} --public --confirm')
         os.system(f'git remote add origin https://github.com/reL4team2/{dst}.git')
         os.system('git push origin --all')
+        os.system('gh repo edit --default-branch master')
         os.chdir('..')
+
+    
+    # 将 rel4team 组织下的 qemu 仓库， fork 到 reL4team2 组织下
+    os.system('gh repo fork rel4team/qemu --org reL4team2')

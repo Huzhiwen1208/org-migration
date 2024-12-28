@@ -23,22 +23,24 @@ def read_replace_code(relative):
     return mapping
 
 if __name__ == '__main__':
+    os.system('mkdir repos')
+    os.chdir('repos')
+
     replaces = read_replace_code('..')
-    repo_infos = parse_csv_to_tuples()
-    # 对于mapping中的key，将其作为git仓库的url，value作为本地目录名，执行git clone命令，如果已经存在则跳过
+    repo_infos = parse_csv_to_tuples('../mapping.csv')
     for item in repo_infos:
         src = item[0]
         dst = item[1]
         branches = item[2]
+        # clone repo
         if not os.path.exists(dst):
             os.system('git clone https://github.com/rel4team/' + src + ' ' + dst)
         else:
             os.system('rm -rf ' + dst)
             os.system('git clone https://github.com/rel4team/' + src + ' ' + dst)
-    # 将所有仓库的远程分支更新到本地, 并将所有远程分支checkout到本地
         os.chdir(dst)
         os.system('git fetch --all')
-        # 查看所有分支, 将分支拉到本地，方便后续上传远程分支
+        # checkout branch，如果有->，则表示需要重命名分支
         for branch in branches:
             if '->' in branch:
                 src_branch = branch.split('->')[0].strip()
@@ -49,7 +51,7 @@ if __name__ == '__main__':
             else:
                 os.system('git checkout ' + branch)
 
-        # 将所有代码中的mi-dev替换成my-dev
+        # 已保留更改后的分支名
         local_branches = []
         for branch in branches:
             if '->' in branch:
@@ -58,14 +60,23 @@ if __name__ == '__main__':
 
         print(f'url: {dst}, branches: {local_branches}')
         print('start replace code...')
+        # 替换代码分支依赖
         for branch in local_branches:
             os.system('git checkout ' + branch)
             for src_, dst_ in replaces.items():
                 os.system(f'LC_CTYPE=C find . -type f -exec sed -i \'\' "s/{src_}/{dst_}/g" {{}} +')
             os.system('git add .')
             os.system('git commit -m "modify branch name"')
-
-            if branch == 'master':
-                os.system('gh repo edit --default-branch ' + branch)
-
         os.chdir('..')
+
+    # 删除rust-sel4和rust-root-task-demo
+    os.chdir('rel4-dev-repo')
+    os.system('git checkout main')
+    os.system('git pull')
+    os.system("sed -i '' '/<project name=\"rust-sel4.git\" path=\"rust-sel4\" revision=\"master_unstable\" upstream=\"master_unstable\" dest-branch=\"master_unstable\" \/>/d' default.xml")
+    os.system("sed -i '' '/<project name=\"rust-root-task-demo-master.git\" path=\"root-task-demo\" \/>/d' default.xml")
+    os.system('git add .')
+    os.system('git commit -m "remove rust-sel4 and rust-root-task-demo"')
+    
+    
+

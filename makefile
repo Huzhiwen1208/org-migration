@@ -10,3 +10,7 @@ delete:
 .PHONY: push
 push: delete
 	@python3 push.py
+
+.PHONY: migration
+migration: clone delete push
+	@echo "Migration done"
